@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from pyfritzhome.devicetypes import FritzhomeTrigger
 
@@ -12,7 +12,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN
 from .coordinator import FritzboxConfigEntry
 from .entity import FritzBoxDeviceEntity, FritzBoxEntity
 
@@ -58,7 +58,7 @@ class FritzboxSwitch(FritzBoxDeviceEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the switch is on."""
-        return self.data.switch_state  # type: ignore [no-any-return]
+        return cast(bool, self.data.switch_state)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
@@ -117,7 +117,7 @@ class FritzboxTrigger(FritzBoxEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the trigger is active."""
-        return self.data.active  # type: ignore [no-any-return]
+        return cast(bool, self.data.active)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the trigger."""
@@ -126,7 +126,6 @@ class FritzboxTrigger(FritzBoxEntity, SwitchEntity):
                 self.coordinator.fritz.set_trigger_active, self.ain
             )
         except Exception as err:
-            LOGGER.error("Failed to activate trigger %s: %s", self.ain, err)
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="trigger_operation_failed",
@@ -141,7 +140,6 @@ class FritzboxTrigger(FritzBoxEntity, SwitchEntity):
                 self.coordinator.fritz.set_trigger_inactive, self.ain
             )
         except Exception as err:
-            LOGGER.error("Failed to deactivate trigger %s: %s", self.ain, err)
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="trigger_operation_failed",
