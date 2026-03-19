@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(gh issue view 138504 --repo home-assistant/core --comments)"
-    ]
-  }
-}
