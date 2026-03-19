@@ -9,6 +9,8 @@
 [![Version][version-badge]][release-url]
 [![License][license-badge]](LICENSE)
 
+[![Add to HACS][hacs-add-badge]][hacs-add-url]
+
 </div>
 
 ---
@@ -142,3 +144,5 @@ Pull requests are welcome. For larger changes, please open an issue first to dis
 [version-badge]: https://img.shields.io/badge/version-1.0.0-22c55e.svg?style=for-the-badge&logo=github&logoColor=white
 [release-url]: https://github.com/duczz/ha-fritzbox-smarthome/releases
 [license-badge]: https://img.shields.io/badge/license-MIT-94a3b8.svg?style=for-the-badge
+[hacs-add-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
+[hacs-add-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=duczz&repository=ha-fritzbox-smarthome&category=integration
