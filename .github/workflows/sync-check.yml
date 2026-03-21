@@ -1,0 +1,66 @@
+name: Upstream Sync Check
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"  # every Monday 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check for upstream changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare with upstream HA Core and apply changes
+        id: diff
+        run: |
+          BASE_URL="https://raw.githubusercontent.com/home-assistant/core/dev/homeassistant/components/fritzbox"
+          TARGET="custom_components/fritzbox"
+          FILES=(
+            "__init__.py" "binary_sensor.py" "button.py" "climate.py"
+            "config_flow.py" "const.py" "coordinator.py" "cover.py"
+            "diagnostics.py" "entity.py" "light.py" "manifest.json"
+            "model.py" "sensor.py" "strings.json" "switch.py"
+          )
+
+          CHANGED=""
+          for f in "${FILES[@]}"; do
+            curl -sL "$BASE_URL/$f" -o "/tmp/upstream_$f"
+            if ! diff -q "$TARGET/$f" "/tmp/upstream_$f" > /dev/null 2>&1; then
+              CHANGED="$CHANGED $f"
+              cp "/tmp/upstream_$f" "$TARGET/$f"
+            fi
+          done
+
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "files=$CHANGED" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: upstream-sync/ha-core
+          delete-branch: true
+          title: "⬆️ Upstream sync: HA Core fritzbox changes"
+          labels: upstream-sync
+          body: |
+            ## Upstream changes detected
+
+            The following files differ from the current HA Core `dev` branch and have been updated:
+
+            ${{ steps.diff.outputs.files }}
+
+            **Review upstream commits:** https://github.com/home-assistant/core/commits/dev/homeassistant/components/fritzbox
+
+            > ⚠️ These are raw upstream files. Review carefully — our custom fixes (error handling, re-login logic, etc.) may need to be re-applied on top of these changes.
+          commit-message: "chore: sync upstream HA Core fritzbox changes"
