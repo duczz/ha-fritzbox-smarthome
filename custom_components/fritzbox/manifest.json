@@ -1,7 +1,6 @@
 {
   "domain": "fritzbox",
   "name": "FRITZ!SmartHome",
-  "version": "1.0.0",
   "codeowners": [
     "@duczz",
     "@mib1185",
@@ -9,9 +8,9 @@
   ],
   "config_flow": true,
   "documentation": "https://github.com/duczz/ha-fritzbox-smarthome",
-  "issue_tracker": "https://github.com/duczz/ha-fritzbox-smarthome/issues",
   "integration_type": "hub",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/duczz/ha-fritzbox-smarthome/issues",
   "loggers": [
     "pyfritzhome"
   ],
@@ -22,5 +21,6 @@
     {
       "st": "urn:schemas-upnp-org:device:fritzbox:1"
     }
-  ]
+  ],
+  "version": "1.0.0"
 }
