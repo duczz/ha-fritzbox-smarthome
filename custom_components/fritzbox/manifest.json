@@ -8,7 +8,7 @@
     "@flabbamann"
   ],
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/fritzbox",
+  "documentation": "https://github.com/duczz/ha-fritzbox-smarthome",
   "issue_tracker": "https://github.com/duczz/ha-fritzbox-smarthome/issues",
   "integration_type": "hub",
   "iot_class": "local_polling",
