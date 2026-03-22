@@ -100,7 +100,10 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
         for entity in er.async_entries_for_config_entry(
             entity_reg, self.config_entry.entry_id
         ):
-            if not any(entity.unique_id.startswith(f"{ain}_") for ain in available_ains):
+            if not any(
+                entity.unique_id == ain or entity.unique_id.startswith(f"{ain}_")
+                for ain in available_ains
+            ):
                 LOGGER.debug("Removing obsolete entity entry %s", entity.entity_id)
                 entity_reg.async_remove(entity.entity_id)
 
