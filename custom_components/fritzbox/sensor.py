@@ -25,13 +25,13 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.util.dt import utc_from_timestamp
 
 from .coordinator import FritzboxConfigEntry
-from .entity import FritzBoxDeviceEntity, async_setup_fritz_device_entities
+from .entity import FritzBoxDeviceEntity
 from .model import FritzEntityDescriptionMixinBase
 
 # Coordinator handles data updates, so we can allow unlimited parallel updates
@@ -48,15 +48,24 @@ class FritzSensorEntityDescription(
     native_value: Callable[[FritzhomeDevice], StateType | datetime]
 
 
-def _suitable_thermostat_attr(attr: str) -> Callable[[FritzhomeDevice], bool]:
-    """Return a suitable-check that requires has_thermostat and a non-None attribute."""
-    return lambda device: device.has_thermostat and getattr(device, attr) is not None
+def suitable_eco_temperature(device: FritzhomeDevice) -> bool:
+    """Check suitablity for eco temperature sensor."""
+    return device.has_thermostat and device.eco_temperature is not None
 
 
-suitable_eco_temperature = _suitable_thermostat_attr("eco_temperature")
-suitable_comfort_temperature = _suitable_thermostat_attr("comfort_temperature")
-suitable_nextchange_temperature = _suitable_thermostat_attr("nextchange_temperature")
-suitable_nextchange_time = _suitable_thermostat_attr("nextchange_endperiod")
+def suitable_comfort_temperature(device: FritzhomeDevice) -> bool:
+    """Check suitablity for comfort temperature sensor."""
+    return device.has_thermostat and device.comfort_temperature is not None
+
+
+def suitable_nextchange_temperature(device: FritzhomeDevice) -> bool:
+    """Check suitablity for next scheduled temperature sensor."""
+    return device.has_thermostat and device.nextchange_temperature is not None
+
+
+def suitable_nextchange_time(device: FritzhomeDevice) -> bool:
+    """Check suitablity for next scheduled changed time sensor."""
+    return device.has_thermostat and device.nextchange_endperiod is not None
 
 
 def suitable_temperature(device: FritzhomeDevice) -> bool:
@@ -222,16 +231,24 @@ async def async_setup_entry(
 ) -> None:
     """Set up the FRITZ!SmartHome sensor from ConfigEntry."""
     coordinator = entry.runtime_data
-    async_setup_fritz_device_entities(
-        coordinator,
-        entry,
-        async_add_entities,
-        lambda ain: (
+
+    @callback
+    def _add_entities(devices: set[str] | None = None) -> None:
+        """Add devices."""
+        if devices is None:
+            devices = coordinator.new_devices
+        if not devices:
+            return
+        async_add_entities(
             FritzBoxSensor(coordinator, ain, description)
+            for ain in devices
             for description in SENSOR_TYPES
             if description.suitable(coordinator.data.devices[ain])
-        ),
-    )
+        )
+
+    entry.async_on_unload(coordinator.async_add_listener(_add_entities))
+
+    _add_entities(set(coordinator.data.devices))
 
 
 class FritzBoxSensor(FritzBoxDeviceEntity, SensorEntity):

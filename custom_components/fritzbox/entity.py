@@ -3,19 +3,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable
 
 from pyfritzhome import FritzhomeDevice
 from pyfritzhome.devicetypes.fritzhomeentitybase import FritzhomeEntityBase
 
-from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import Entity, EntityDescription
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import FritzboxConfigEntry, FritzboxDataUpdateCoordinator
+from .coordinator import FritzboxDataUpdateCoordinator
 
 
 class FritzBoxEntity(CoordinatorEntity[FritzboxDataUpdateCoordinator], ABC):
@@ -62,31 +59,3 @@ class FritzBoxDeviceEntity(FritzBoxEntity):
     def device_info(self) -> DeviceInfo:
         """Return device specific attributes."""
         return DeviceInfo(identifiers={(DOMAIN, self.data.device_and_unit_id[0])})
-
-
-def async_setup_fritz_device_entities(
-    coordinator: FritzboxDataUpdateCoordinator,
-    entry: FritzboxConfigEntry,
-    async_add_entities: AddConfigEntryEntitiesCallback,
-    entity_factory: Callable[[str], Iterable[Entity]],
-) -> None:
-    """Register Fritz!Box device entities with a standard listener pattern.
-
-    Calls entity_factory(ain) for each AIN and adds the returned entities.
-    Registers a coordinator listener so new devices are picked up automatically.
-    """
-
-    @callback
-    def _add_entities(devices: set[str] | None = None) -> None:
-        if devices is None:
-            devices = coordinator.new_devices
-        if not devices:
-            return
-        async_add_entities(
-            entity
-            for ain in devices
-            for entity in entity_factory(ain)
-        )
-
-    entry.async_on_unload(coordinator.async_add_listener(_add_entities))
-    _add_entities(set(coordinator.data.devices))

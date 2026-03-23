@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from pyfritzhome.devicetypes import FritzhomeTrigger
 
@@ -58,32 +58,18 @@ class FritzboxSwitch(FritzBoxDeviceEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the switch is on."""
-        return cast(bool, self.data.switch_state)
+        return self.data.switch_state  # type: ignore [no-any-return]
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
         self.check_lock_state()
-        try:
-            await self.hass.async_add_executor_job(self.data.set_switch_state_on, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="switch_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_switch_state_on, True)
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
         self.check_lock_state()
-        try:
-            await self.hass.async_add_executor_job(self.data.set_switch_state_off, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="switch_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_switch_state_off, True)
         await self.coordinator.async_refresh()
 
     def check_lock_state(self) -> None:
@@ -117,32 +103,18 @@ class FritzboxTrigger(FritzBoxEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the trigger is active."""
-        return cast(bool, self.data.active)
+        return self.data.active  # type: ignore [no-any-return]
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the trigger."""
-        try:
-            await self.hass.async_add_executor_job(
-                self.coordinator.fritz.set_trigger_active, self.ain
-            )
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="trigger_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(
+            self.coordinator.fritz.set_trigger_active, self.ain
+        )
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Deactivate the trigger."""
-        try:
-            await self.hass.async_add_executor_job(
-                self.coordinator.fritz.set_trigger_inactive, self.ain
-            )
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="trigger_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(
+            self.coordinator.fritz.set_trigger_inactive, self.ain
+        )
         await self.coordinator.async_refresh()

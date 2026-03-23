@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -10,13 +10,11 @@ from homeassistant.components.cover import (
     CoverEntity,
     CoverEntityFeature,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
 from .coordinator import FritzboxConfigEntry
-from .entity import FritzBoxDeviceEntity, async_setup_fritz_device_entities
+from .entity import FritzBoxDeviceEntity
 
 # Coordinator handles data updates, so we can allow unlimited parallel updates
 PARALLEL_UPDATES = 0
@@ -29,16 +27,23 @@ async def async_setup_entry(
 ) -> None:
     """Set up the FRITZ!SmartHome cover from ConfigEntry."""
     coordinator = entry.runtime_data
-    async_setup_fritz_device_entities(
-        coordinator,
-        entry,
-        async_add_entities,
-        lambda ain: (
-            [FritzboxCover(coordinator, ain)]
+
+    @callback
+    def _add_entities(devices: set[str] | None = None) -> None:
+        """Add devices."""
+        if devices is None:
+            devices = coordinator.new_devices
+        if not devices:
+            return
+        async_add_entities(
+            FritzboxCover(coordinator, ain)
+            for ain in devices
             if coordinator.data.devices[ain].has_blind
-            else []
-        ),
-    )
+        )
+
+    entry.async_on_unload(coordinator.async_add_listener(_add_entities))
+
+    _add_entities(set(coordinator.data.devices))
 
 
 class FritzboxCover(FritzBoxDeviceEntity, CoverEntity):
@@ -65,54 +70,25 @@ class FritzboxCover(FritzBoxDeviceEntity, CoverEntity):
         """Return if the cover is closed."""
         if self.data.levelpercentage is None:
             return None
-        return cast(bool, self.data.levelpercentage == 100)
+        return self.data.levelpercentage == 100  # type: ignore [no-any-return]
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
-        try:
-            await self.hass.async_add_executor_job(self.data.set_blind_open, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="cover_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_blind_open, True)
         await self.coordinator.async_refresh()
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close the cover."""
-        try:
-            await self.hass.async_add_executor_job(self.data.set_blind_close, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="cover_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_blind_close, True)
         await self.coordinator.async_refresh()
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Move the cover to a specific position."""
-        try:
-            await self.hass.async_add_executor_job(
-                self.data.set_level_percentage, 100 - kwargs[ATTR_POSITION], True
-            )
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="cover_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
-        await self.coordinator.async_refresh()
+        await self.hass.async_add_executor_job(
+            self.data.set_level_percentage, 100 - kwargs[ATTR_POSITION], True
+        )
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
-        try:
-            await self.hass.async_add_executor_job(self.data.set_blind_stop, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="cover_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_blind_stop, True)
         await self.coordinator.async_refresh()
