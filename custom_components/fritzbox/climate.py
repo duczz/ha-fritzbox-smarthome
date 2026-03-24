@@ -15,12 +15,11 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import DOMAIN, LOGGER
 from .coordinator import FritzboxConfigEntry, FritzboxDataUpdateCoordinator
-from .entity import FritzBoxDeviceEntity, async_setup_fritz_device_entities
+from .entity import FritzBoxDeviceEntity
 from .sensor import value_scheduled_preset
 
 # Coordinator handles data updates, so we can allow unlimited parallel updates
@@ -57,16 +56,23 @@ async def async_setup_entry(
 ) -> None:
     """Set up the FRITZ!SmartHome thermostat from ConfigEntry."""
     coordinator = entry.runtime_data
-    async_setup_fritz_device_entities(
-        coordinator,
-        entry,
-        async_add_entities,
-        lambda ain: (
-            [FritzboxThermostat(coordinator, ain)]
+
+    @callback
+    def _add_entities(devices: set[str] | None = None) -> None:
+        """Add devices."""
+        if devices is None:
+            devices = coordinator.new_devices
+        if not devices:
+            return
+        async_add_entities(
+            FritzboxThermostat(coordinator, ain)
+            for ain in devices
             if coordinator.data.devices[ain].has_thermostat
-            else []
-        ),
-    )
+        )
+
+    entry.async_on_unload(coordinator.async_add_listener(_add_entities))
+
+    _add_entities(set(coordinator.data.devices))
 
 
 class FritzboxThermostat(FritzBoxDeviceEntity, ClimateEntity):
@@ -120,16 +126,7 @@ class FritzboxThermostat(FritzBoxDeviceEntity, ClimateEntity):
 
     async def async_set_hkr_state(self, hkr_state: str) -> None:
         """Set the state of the climate."""
-        try:
-            await self.hass.async_add_executor_job(
-                self.data.set_hkr_state, hkr_state, True
-            )
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="climate_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_hkr_state, hkr_state, True)
         await self.coordinator.async_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -138,16 +135,9 @@ class FritzboxThermostat(FritzBoxDeviceEntity, ClimateEntity):
         if kwargs.get(ATTR_HVAC_MODE) is HVACMode.OFF:
             await self.async_set_hkr_state("off")
         elif (target_temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
-            try:
-                await self.hass.async_add_executor_job(
-                    self.data.set_target_temperature, target_temp, True
-                )
-            except Exception as err:
-                raise HomeAssistantError(
-                    translation_domain=DOMAIN,
-                    translation_key="climate_operation_failed",
-                    translation_placeholders={"error": str(err)},
-                ) from err
+            await self.hass.async_add_executor_job(
+                self.data.set_target_temperature, target_temp, True
+            )
             await self.coordinator.async_refresh()
         else:
             return
