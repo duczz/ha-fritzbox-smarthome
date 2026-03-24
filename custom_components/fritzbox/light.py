@@ -11,13 +11,13 @@ from homeassistant.components.light import (
     ColorMode,
     LightEntity,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import COLOR_MODE, DOMAIN, LOGGER
 from .coordinator import FritzboxConfigEntry, FritzboxDataUpdateCoordinator
-from .entity import FritzBoxDeviceEntity, async_setup_fritz_device_entities
+from .entity import FritzBoxDeviceEntity
 
 # Coordinator handles data updates, so we can allow unlimited parallel updates
 PARALLEL_UPDATES = 0
@@ -30,16 +30,23 @@ async def async_setup_entry(
 ) -> None:
     """Set up the FRITZ!SmartHome light from ConfigEntry."""
     coordinator = entry.runtime_data
-    async_setup_fritz_device_entities(
-        coordinator,
-        entry,
-        async_add_entities,
-        lambda ain: (
-            [FritzboxLight(coordinator, ain)]
+
+    @callback
+    def _add_entities(devices: set[str] | None = None) -> None:
+        """Add devices."""
+        if devices is None:
+            devices = coordinator.new_devices
+        if not devices:
+            return
+        async_add_entities(
+            FritzboxLight(coordinator, ain)
+            for ain in devices
             if coordinator.data.devices[ain].has_lightbulb
-            else []
-        ),
-    )
+        )
+
+    entry.async_on_unload(coordinator.async_add_listener(_add_entities))
+
+    _add_entities(set(coordinator.data.devices))
 
 
 class FritzboxLight(FritzBoxDeviceEntity, LightEntity):
