@@ -114,7 +114,7 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 ### 🐛 Bug Fixes
 
 - **`coordinator.py`** — `UpdateFailed` now includes the original exception message in the log instead of showing an empty error string
-- **`coordinator.py`** — Replaced full integration reload on connection errors with a re-login + retry pattern — nightly DSL forced reconnects no longer cause all entities to briefly disappear and reappear
+- **`coordinator.py`** — Connection errors (e.g. nightly DSL forced reconnects) trigger a clean integration reload instead of leaving the coordinator in a broken state
 - **`coordinator.py`** — Trigger entities are no longer incorrectly removed from the entity registry during cleanup
 - **`cover.py`** — `async_set_cover_position` now triggers a coordinator refresh after the API call so the state updates immediately
 - **`light.py`** — `hs_color` no longer crashes with a `TypeError` when a device returns `None` for hue or saturation
@@ -125,7 +125,6 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 - **Error handling** — All API calls in `light`, `cover`, `button`, `switch`, and `climate` are wrapped in `try/except`. Failures surface as `HomeAssistantError` with a user-readable message instead of crashing silently
 - **`diagnostics.py`** — FRITZ!SmartHome triggers (routines) are now included in diagnostic exports; credential leaks via object references are prevented
-- **`entity.py`** — Common entity setup boilerplate extracted into a shared helper, reducing code duplication across five platform files
 - **`sensor.py`** — Four identical thermostat attribute checks consolidated into a single factory function
 - **`strings.json`** — Translations added for all new `HomeAssistantError` exception messages
 
@@ -141,7 +140,7 @@ Pull requests are welcome. For larger changes, please open an issue first to dis
 [hacs-url]: https://hacs.xyz
 [ha-badge]: https://img.shields.io/badge/Home%20Assistant-2024.1+-41BDF5.svg?style=for-the-badge&logo=homeassistant&logoColor=white
 [ha-url]: https://www.home-assistant.io/integrations/fritzbox
-[version-badge]: https://img.shields.io/badge/version-1.0.0-22c55e.svg?style=for-the-badge&logo=github&logoColor=white
+[version-badge]: https://img.shields.io/badge/version-1.0.3-22c55e.svg?style=for-the-badge&logo=github&logoColor=white
 [release-url]: https://github.com/duczz/ha-fritzbox-smarthome/releases
 [license-badge]: https://img.shields.io/badge/license-MIT-94a3b8.svg?style=for-the-badge
 [hacs-add-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
