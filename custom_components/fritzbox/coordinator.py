@@ -186,7 +186,15 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
             new_data = await self.hass.async_add_executor_job(
                 self._update_fritz_devices
             )
-        except (RequestConnectionError, HTTPError) as ex:
+        except HTTPError as ex:
+            LOGGER.debug(
+                "Re-login %s due to HTTP error '%s'",
+                self.config_entry.title,
+                ex,
+            )
+            await self.hass.async_add_executor_job(self.fritz.login)
+            raise UpdateFailed from ex
+        except RequestConnectionError as ex:
             LOGGER.debug(
                 "Reload %s due to error '%s' to ensure proper re-login",
                 self.config_entry.title,
