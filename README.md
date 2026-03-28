@@ -113,8 +113,9 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 ### 🐛 Bug Fixes
 
-- **`coordinator.py`** — `UpdateFailed` now includes the original exception message in the log instead of showing an empty error string
-- **`coordinator.py`** — Connection errors (e.g. nightly DSL forced reconnects) trigger a clean integration reload instead of leaving the coordinator in a broken state
+- **`coordinator.py`** — `UpdateFailed` now includes the original exception message instead of showing an empty error string in the HA UI
+- **`coordinator.py`** — `HTTPError` (expired session) triggers an immediate re-login so entities stay available; `ConnectionError` (e.g. nightly DSL forced reconnects) triggers a clean integration reload
+- **`coordinator.py`** — `config_entry.title` is used as the coordinator name for readable log messages
 - **`coordinator.py`** — Trigger entities are no longer incorrectly removed from the entity registry during cleanup
 - **`cover.py`** — `async_set_cover_position` now triggers a coordinator refresh after the API call so the state updates immediately
 - **`light.py`** — `hs_color` no longer crashes with a `TypeError` when a device returns `None` for hue or saturation
