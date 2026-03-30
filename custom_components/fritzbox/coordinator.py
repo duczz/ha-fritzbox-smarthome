@@ -46,7 +46,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
             hass,
             LOGGER,
             config_entry=config_entry,
-            name=config_entry.title,
+            name=config_entry.entry_id,
             update_interval=timedelta(seconds=30),
         )
 
@@ -95,15 +95,12 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
 
     def cleanup_removed_devices(self, data: FritzboxCoordinatorData) -> None:
         """Cleanup entity and device registry from removed devices."""
-        available_ains = list(data.devices) + list(data.templates) + list(data.triggers)
+        available_ains = list(data.devices) + list(data.templates)
         entity_reg = er.async_get(self.hass)
         for entity in er.async_entries_for_config_entry(
             entity_reg, self.config_entry.entry_id
         ):
-            if not any(
-                entity.unique_id == ain or entity.unique_id.startswith(f"{ain}_")
-                for ain in available_ains
-            ):
+            if entity.unique_id.split("_")[0] not in available_ains:
                 LOGGER.debug("Removing obsolete entity entry %s", entity.entity_id)
                 entity_reg.async_remove(entity.entity_id)
 
@@ -186,22 +183,14 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
             new_data = await self.hass.async_add_executor_job(
                 self._update_fritz_devices
             )
-        except HTTPError as ex:
-            LOGGER.debug(
-                "Re-login %s due to HTTP error '%s'",
-                self.config_entry.title,
-                ex,
-            )
-            await self.hass.async_add_executor_job(self.fritz.login)
-            raise UpdateFailed(str(ex)) from ex
-        except RequestConnectionError as ex:
+        except (RequestConnectionError, HTTPError) as ex:
             LOGGER.debug(
                 "Reload %s due to error '%s' to ensure proper re-login",
                 self.config_entry.title,
                 ex,
             )
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
-            raise UpdateFailed(str(ex)) from ex
+            raise UpdateFailed from ex
 
         for device in new_data.devices.values():
             # create device registry entry for new main devices

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from homeassistant.components.climate import (
     ATTR_HVAC_MODE,
@@ -15,6 +15,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import DOMAIN, LOGGER
@@ -96,7 +97,7 @@ class FritzboxThermostat(FritzBoxDeviceEntity, ClimateEntity):
         super().__init__(coordinator, ain)
 
     @callback
-    def async_write_ha_state(self) -> None:
+    def _async_write_ha_state(self) -> None:
         """Write the state to the HASS state machine."""
         if self.data.holiday_active:
             self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
@@ -108,21 +109,21 @@ class FritzboxThermostat(FritzBoxDeviceEntity, ClimateEntity):
             self._attr_supported_features = SUPPORTED_FEATURES
             self._attr_hvac_modes = HVAC_MODES
             self._attr_preset_modes = PRESET_MODES
-        return super().async_write_ha_state()
+        return super()._async_write_ha_state()
 
     @property
     def current_temperature(self) -> float:
         """Return the current temperature."""
         if self.data.has_temperature_sensor and self.data.temperature is not None:
-            return cast(float, self.data.temperature)
-        return cast(float, self.data.actual_temperature)
+            return self.data.temperature  # type: ignore [no-any-return]
+        return self.data.actual_temperature  # type: ignore [no-any-return]
 
     @property
     def target_temperature(self) -> float | None:
         """Return the temperature we try to reach."""
         if self.data.target_temperature in [ON_API_TEMPERATURE, OFF_API_TEMPERATURE]:
             return None
-        return cast(float, self.data.target_temperature)
+        return self.data.target_temperature  # type: ignore [no-any-return]
 
     async def async_set_hkr_state(self, hkr_state: str) -> None:
         """Set the state of the climate."""

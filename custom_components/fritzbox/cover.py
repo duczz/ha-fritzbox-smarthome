@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -70,7 +70,7 @@ class FritzboxCover(FritzBoxDeviceEntity, CoverEntity):
         """Return if the cover is closed."""
         if self.data.levelpercentage is None:
             return None
-        return cast(bool, self.data.levelpercentage == 100)
+        return self.data.levelpercentage == 100  # type: ignore [no-any-return]
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""

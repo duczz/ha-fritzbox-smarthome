@@ -77,7 +77,6 @@ async def async_remove_config_entry_device(
         if identifier[0] == DOMAIN and (
             identifier[1] in coordinator.data.devices
             or identifier[1] in coordinator.data.templates
-            or identifier[1] in coordinator.data.triggers
         ):
             return False
 
