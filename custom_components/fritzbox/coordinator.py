@@ -193,7 +193,15 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 ex,
             )
             await self.hass.async_add_executor_job(self.fritz.login)
-            raise UpdateFailed(str(ex)) from ex
+            try:
+                new_data = await self.hass.async_add_executor_job(
+                    self._update_fritz_devices
+                )
+            except (HTTPError, RequestConnectionError) as retry_ex:
+                self.hass.config_entries.async_schedule_reload(
+                    self.config_entry.entry_id
+                )
+                raise UpdateFailed(str(retry_ex)) from retry_ex
         except RequestConnectionError as ex:
             LOGGER.debug(
                 "Reload %s due to error '%s' to ensure proper re-login",
