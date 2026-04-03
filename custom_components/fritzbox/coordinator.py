@@ -192,7 +192,15 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 self.config_entry.title,
                 ex,
             )
-            await self.hass.async_add_executor_job(self.fritz.login)
+            try:
+                await self.hass.async_add_executor_job(self.fritz.login)
+            except LoginError as login_ex:
+                raise ConfigEntryAuthFailed from login_ex
+            except RequestConnectionError as conn_ex:
+                self.hass.config_entries.async_schedule_reload(
+                    self.config_entry.entry_id
+                )
+                raise UpdateFailed(str(conn_ex)) from conn_ex
             try:
                 new_data = await self.hass.async_add_executor_job(
                     self._update_fritz_devices
