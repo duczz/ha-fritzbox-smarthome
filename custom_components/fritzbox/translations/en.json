@@ -93,24 +93,6 @@
     },
     "manual_switching_disabled": {
       "message": "Can't toggle switch while manual switching is disabled for the device."
-    },
-    "light_operation_failed": {
-      "message": "Failed to change light setting: {error}"
-    },
-    "cover_operation_failed": {
-      "message": "Failed to change cover: {error}"
-    },
-    "template_failed": {
-      "message": "Failed to apply template: {error}"
-    },
-    "trigger_operation_failed": {
-      "message": "Failed to change trigger state: {error}"
-    },
-    "switch_operation_failed": {
-      "message": "Failed to change switch state: {error}"
-    },
-    "climate_operation_failed": {
-      "message": "Failed to change thermostat setting: {error}"
     }
   }
 }

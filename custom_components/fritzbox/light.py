@@ -12,10 +12,9 @@ from homeassistant.components.light import (
     LightEntity,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import COLOR_MODE, DOMAIN, LOGGER
+from .const import COLOR_MODE, LOGGER
 from .coordinator import FritzboxConfigEntry, FritzboxDataUpdateCoordinator
 from .entity import FritzBoxDeviceEntity
 
@@ -123,62 +122,48 @@ class FritzboxLight(FritzBoxDeviceEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
-        try:
-            if kwargs.get(ATTR_BRIGHTNESS) is not None:
-                level = kwargs[ATTR_BRIGHTNESS]
-                await self.hass.async_add_executor_job(self.data.set_level, level, True)
-            if kwargs.get(ATTR_HS_COLOR) is not None:
-                # HA gives 0..360 for hue, fritz light only supports 0..359
-                unmapped_hue = int(kwargs[ATTR_HS_COLOR][0] % 360)
-                unmapped_saturation = round(
-                    cast(float, kwargs[ATTR_HS_COLOR][1]) * 255.0 / 100.0
-                )
-                if self.data.fullcolorsupport:
-                    LOGGER.debug("device has fullcolorsupport, using 'setunmappedcolor'")
-                    await self.hass.async_add_executor_job(
-                        self.data.set_unmapped_color,
-                        (unmapped_hue, unmapped_saturation),
-                        0,
-                        True,
-                    )
-                else:
-                    LOGGER.debug(
-                        "device has no fullcolorsupport, using supported colors with 'setcolor'"
-                    )
-                    # find supported hs values closest to what user selected
-                    hue = min(
-                        self._supported_hs.keys(), key=lambda x: abs(x - unmapped_hue)
-                    )
-                    saturation = min(
-                        self._supported_hs[hue],
-                        key=lambda x: abs(x - unmapped_saturation),
-                    )
-                    await self.hass.async_add_executor_job(
-                        self.data.set_color, (hue, saturation), 0, True
-                    )
-
-            if kwargs.get(ATTR_COLOR_TEMP_KELVIN) is not None:
+        if kwargs.get(ATTR_BRIGHTNESS) is not None:
+            level = kwargs[ATTR_BRIGHTNESS]
+            await self.hass.async_add_executor_job(self.data.set_level, level, True)
+        if kwargs.get(ATTR_HS_COLOR) is not None:
+            # HA gives 0..360 for hue, fritz light only supports 0..359
+            unmapped_hue = int(kwargs[ATTR_HS_COLOR][0] % 360)
+            unmapped_saturation = round(
+                cast(float, kwargs[ATTR_HS_COLOR][1]) * 255.0 / 100.0
+            )
+            if self.data.fullcolorsupport:
+                LOGGER.debug("device has fullcolorsupport, using 'setunmappedcolor'")
                 await self.hass.async_add_executor_job(
-                    self.data.set_color_temp, kwargs[ATTR_COLOR_TEMP_KELVIN], 0, True
+                    self.data.set_unmapped_color,
+                    (unmapped_hue, unmapped_saturation),
+                    0,
+                    True,
+                )
+            else:
+                LOGGER.debug(
+                    "device has no fullcolorsupport, using supported colors with 'setcolor'"
+                )
+                # find supported hs values closest to what user selected
+                hue = min(
+                    self._supported_hs.keys(), key=lambda x: abs(x - unmapped_hue)
+                )
+                saturation = min(
+                    self._supported_hs[hue],
+                    key=lambda x: abs(x - unmapped_saturation),
+                )
+                await self.hass.async_add_executor_job(
+                    self.data.set_color, (hue, saturation), 0, True
                 )
 
-            await self.hass.async_add_executor_job(self.data.set_state_on, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="light_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        if kwargs.get(ATTR_COLOR_TEMP_KELVIN) is not None:
+            await self.hass.async_add_executor_job(
+                self.data.set_color_temp, kwargs[ATTR_COLOR_TEMP_KELVIN], 0, True
+            )
+
+        await self.hass.async_add_executor_job(self.data.set_state_on, True)
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off."""
-        try:
-            await self.hass.async_add_executor_job(self.data.set_state_off, True)
-        except Exception as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="light_operation_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+        await self.hass.async_add_executor_job(self.data.set_state_off, True)
         await self.coordinator.async_refresh()

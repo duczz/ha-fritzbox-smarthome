@@ -48,15 +48,24 @@ class FritzSensorEntityDescription(
     native_value: Callable[[FritzhomeDevice], StateType | datetime]
 
 
-def _suitable_thermostat_attr(attr: str) -> Callable[[FritzhomeDevice], bool]:
-    """Return a suitable-check that requires has_thermostat and a non-None attribute."""
-    return lambda device: device.has_thermostat and getattr(device, attr) is not None
+def suitable_eco_temperature(device: FritzhomeDevice) -> bool:
+    """Check suitablity for eco temperature sensor."""
+    return device.has_thermostat and device.eco_temperature is not None
 
 
-suitable_eco_temperature = _suitable_thermostat_attr("eco_temperature")
-suitable_comfort_temperature = _suitable_thermostat_attr("comfort_temperature")
-suitable_nextchange_temperature = _suitable_thermostat_attr("nextchange_temperature")
-suitable_nextchange_time = _suitable_thermostat_attr("nextchange_endperiod")
+def suitable_comfort_temperature(device: FritzhomeDevice) -> bool:
+    """Check suitablity for comfort temperature sensor."""
+    return device.has_thermostat and device.comfort_temperature is not None
+
+
+def suitable_nextchange_temperature(device: FritzhomeDevice) -> bool:
+    """Check suitablity for next scheduled temperature sensor."""
+    return device.has_thermostat and device.nextchange_temperature is not None
+
+
+def suitable_nextchange_time(device: FritzhomeDevice) -> bool:
+    """Check suitablity for next scheduled changed time sensor."""
+    return device.has_thermostat and device.nextchange_endperiod is not None
 
 
 def suitable_temperature(device: FritzhomeDevice) -> bool:
