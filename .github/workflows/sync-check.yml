@@ -12,15 +12,14 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      issues: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Compare with upstream HA Core and apply changes
+      - name: Compare upstream against baseline snapshots
         id: diff
         run: |
           BASE_URL="https://raw.githubusercontent.com/home-assistant/core/dev/homeassistant/components/fritzbox"
-          TARGET="custom_components/fritzbox"
+          SNAPSHOT_DIR=".github/upstream-snapshots"
           FILES=(
             "__init__.py" "binary_sensor.py" "button.py" "climate.py"
             "config_flow.py" "const.py" "coordinator.py" "cover.py"
@@ -28,25 +27,55 @@ jobs:
             "model.py" "sensor.py" "strings.json" "switch.py"
           )
 
+          mkdir -p "$SNAPSHOT_DIR"
+          mkdir -p /tmp/upstream
+
           CHANGED=""
+          DIFF_BODY=""
+
           for f in "${FILES[@]}"; do
-            curl -sL "$BASE_URL/$f" -o "/tmp/upstream_$f"
-            if ! diff -q "$TARGET/$f" "/tmp/upstream_$f" > /dev/null 2>&1; then
+            curl -sL "$BASE_URL/$f" -o "/tmp/upstream/$f"
+            SNAPSHOT="$SNAPSHOT_DIR/$f"
+
+            if [ ! -f "$SNAPSHOT" ]; then
+              # First time seeing this file — initialize snapshot, no alert
+              cp "/tmp/upstream/$f" "$SNAPSHOT"
+            elif ! diff -q "$SNAPSHOT" "/tmp/upstream/$f" > /dev/null 2>&1; then
               CHANGED="$CHANGED $f"
-              cp "/tmp/upstream_$f" "$TARGET/$f"
+              FILE_DIFF=$(diff "$SNAPSHOT" "/tmp/upstream/$f" || true)
+              DIFF_BODY="${DIFF_BODY}
+
+          ### \`$f\`
+          \`\`\`diff
+          ${FILE_DIFF}
+          \`\`\`"
+              # Update snapshot so merging this PR advances the baseline
+              cp "/tmp/upstream/$f" "$SNAPSHOT"
             fi
           done
 
           if [ -n "$CHANGED" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "files=$CHANGED" >> $GITHUB_OUTPUT
+            # Write diff body to a file to avoid shell escaping issues
+            echo "$DIFF_BODY" > /tmp/diff_body.txt
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Read diff body
+        id: body
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          {
+            echo 'content<<EOF'
+            cat /tmp/diff_body.txt
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Create Pull Request
         if: steps.diff.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: upstream-sync/ha-core
@@ -56,11 +85,30 @@ jobs:
           body: |
             ## Upstream changes detected
 
-            The following files differ from the current HA Core `dev` branch and have been updated:
+            The following files changed upstream since the last review:
 
-            ${{ steps.diff.outputs.files }}
+            `${{ steps.diff.outputs.files }}`
 
             **Review upstream commits:** https://github.com/home-assistant/core/commits/dev/homeassistant/components/fritzbox
 
-            > ⚠️ These are raw upstream files. Review carefully — our custom fixes (error handling, re-login logic, etc.) may need to be re-applied on top of these changes.
-          commit-message: "chore: sync upstream HA Core fritzbox changes"
+            > Merging this PR only advances the baseline — your `custom_components/` files are **not modified**.
+            > Manually apply any upstream improvements that make sense for this fork.
+
+            ---
+
+            ${{ steps.body.outputs.content }}
+          commit-message: "chore: advance upstream baseline"
+
+      - name: Initialize snapshots (first run)
+        if: steps.diff.outputs.changed == 'false'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: upstream-sync/init-snapshots
+          delete-branch: true
+          title: "chore: initialize upstream baseline snapshots"
+          labels: upstream-sync
+          body: |
+            Initializes `.github/upstream-snapshots/` with the current upstream state.
+            Merge this once — future sync PRs will only show **new** upstream changes.
+          commit-message: "chore: initialize upstream baseline snapshots"
