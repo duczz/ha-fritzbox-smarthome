@@ -35,7 +35,8 @@ jobs:
 
           for f in "${FILES[@]}"; do
             curl -sL "$BASE_URL/$f" -o "/tmp/upstream/$f"
-            SNAPSHOT="$SNAPSHOT_DIR/$f"
+            # Store as .txt to prevent Hassfest/HACS from scanning snapshot files
+            SNAPSHOT="$SNAPSHOT_DIR/${f}.txt"
 
             if [ ! -f "$SNAPSHOT" ]; then
               # First time seeing this file — initialize snapshot, no alert
