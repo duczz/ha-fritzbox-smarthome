@@ -88,26 +88,25 @@ class FritzboxLight(FritzBoxDeviceEntity, LightEntity):
     @property
     def is_on(self) -> bool:
         """If the light is currently on or off."""
-        return cast(bool, self.data.state)
+        return self.data.state  # type: ignore [no-any-return]
 
     @property
     def brightness(self) -> int:
         """Return the current Brightness."""
-        return cast(int, self.data.level)
+        return self.data.level  # type: ignore [no-any-return]
 
     @property
-    def hs_color(self) -> tuple[float, float] | None:
+    def hs_color(self) -> tuple[float, float]:
         """Return the hs color value."""
         hue = self.data.hue
         saturation = self.data.saturation
-        if hue is None or saturation is None:
-            return None
-        return (float(hue), float(saturation) * 100.0 / 255.0)
+
+        return (hue, float(saturation) * 100.0 / 255.0)
 
     @property
     def color_temp_kelvin(self) -> int:
         """Return the CT color value."""
-        return cast(int, self.data.color_temp)
+        return self.data.color_temp  # type: ignore [no-any-return]
 
     @property
     def color_mode(self) -> ColorMode:

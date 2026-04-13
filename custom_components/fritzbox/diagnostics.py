@@ -27,7 +27,6 @@ async def async_get_config_entry_diagnostics(
     entities: dict[str, dict] = {
         **coordinator.data.devices,
         **coordinator.data.templates,
-        **coordinator.data.triggers,
     }
     diag_data["data"] = {
         ain: {k: v for k, v in vars(entity).items() if not k.startswith("_")}
