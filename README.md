@@ -113,19 +113,27 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 ### 🐛 Bug Fixes
 
-- **`coordinator.py`** — Connection errors now include the original exception message in the HA UI instead of showing an empty error string
-- **`coordinator.py`** — `HTTPError` (expired session) triggers an immediate re-login and retry so entities stay available without an ERROR log; if re-login fails with `LoginError` (password changed), a reauth flow is started automatically; `ConnectionError` and `TimeoutError` (e.g. nightly DSL forced reconnects) trigger a clean integration reload
-- **`coordinator.py`** — `config_entry.title` is used as the coordinator name for readable log messages
-- **`coordinator.py`** — Trigger entities are no longer incorrectly removed from the entity registry during cleanup
-- **`cover.py`** — `async_set_cover_position` now triggers a coordinator refresh after the API call so the state updates immediately
-- **`light.py`** — `hs_color` no longer crashes with a `TypeError` when a device returns `None` for hue or saturation
-- **`climate.py`** — Missing `callback` import that caused a `NameError` when loading the platform is fixed
-- **`__init__.py`** — `async_remove_config_entry_device` now correctly protects trigger devices from accidental removal
+- **No ERROR log on session expiry** — When a FRITZ!Box session expires (HTTP 403), the integration re-authenticates and retries the update silently. No ERROR entry appears in the HA log unless the re-login itself fails. (`coordinator.py`)
+
+- **Automatic reauth on password change** — If the FRITZ!Box password changes, HA automatically starts a reauth flow instead of leaving the integration in a silent error state. (`coordinator.py`)
+
+- **Automatic reload on connection loss** — A `ConnectionError` or `TimeoutError` (e.g. during nightly DSL forced reconnects) triggers a clean integration reload so the session is properly re-established. (`coordinator.py`)
+
+- **Readable error messages in the HA UI** — Connection errors now include the original exception message (e.g. `Connection refused`) in the HA UI instead of showing an empty error string. (`coordinator.py`)
+
+- **Trigger entities are preserved during cleanup** — FRITZ!SmartHome routines (triggers) are no longer incorrectly removed from the entity registry during device cleanup. (`coordinator.py`, `__init__.py`)
+
+- **Cover position updates immediately** — After setting a blind/shutter position, the state refreshes right away instead of waiting for the next poll interval. (`cover.py`)
+
+- **No crash for bulbs without color data** — If a FRITZ!DECT 500 returns `None` for hue or saturation, the integration no longer raises a `TypeError`. (`light.py`)
+
+- **Climate platform loads correctly** — A missing `callback` import that caused a `NameError` when loading the climate platform is fixed. (`climate.py`)
 
 ### ✨ Improvements
 
-- **`diagnostics.py`** — FRITZ!SmartHome triggers (routines) are now included in diagnostic exports
-- **`climate.py`** — Uses `_async_write_ha_state` (correct private method) for state updates
+- **Routines included in diagnostic exports** — FRITZ!SmartHome triggers (routines) are now part of the HA diagnostic download. (`diagnostics.py`)
+
+- **Readable log messages** — The coordinator name in HA logs shows the FRITZ!Box hostname instead of the internal config entry ID. (`coordinator.py`)
 
 ---
 
