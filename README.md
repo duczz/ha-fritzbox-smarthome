@@ -15,7 +15,7 @@
 
 ---
 
-This fork of the official Home Assistant [FRITZ!SmartHome integration][ha-url] fixes several upstream bugs and improves error handling and robustness across all platforms.
+This fork of the official Home Assistant [FRITZ!SmartHome integration][ha-url] fixes several upstream bugs that affect reliability in real-world use — including session handling, connection recovery, and edge-case device states.
 
 ## 🔌 Supported Platforms
 
@@ -113,7 +113,7 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 ### 🐛 Bug Fixes
 
-- **No ERROR log on session expiry** — When a FRITZ!Box session expires (HTTP 403), the integration re-authenticates and retries the update silently. No ERROR entry appears in the HA log unless the re-login itself fails. (`coordinator.py`)
+- **No ERROR log on session expiry** — When a FRITZ!Box session expires (HTTP 403), the integration re-authenticates and retries the update silently. No ERROR entry appears in the HA log unless the re-login itself fails. The official integration simply reloads on every 403 — causing a brief unavailability each time. (`coordinator.py`)
 
 - **Automatic reauth on password change** — If the FRITZ!Box password changes, HA automatically starts a reauth flow instead of leaving the integration in a silent error state. (`coordinator.py`)
 
@@ -121,11 +121,13 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 - **Readable error messages in the HA UI** — Connection errors now include the original exception message (e.g. `Connection refused`) in the HA UI instead of showing an empty error string. (`coordinator.py`)
 
-- **Trigger entities are preserved during cleanup** — FRITZ!SmartHome routines (triggers) are no longer incorrectly removed from the entity registry during device cleanup. (`coordinator.py`, `__init__.py`)
+- **Trigger entities are preserved during cleanup** — FRITZ!SmartHome routines (triggers) are no longer incorrectly removed from the entity registry during device cleanup. The official integration loses trigger entities whenever the device list changes. (`coordinator.py`, `__init__.py`)
+
+- **Trigger devices protected from accidental removal** — FRITZ!SmartHome routine devices can no longer be accidentally removed via the HA device registry UI. (`__init__.py`)
 
 - **Cover position updates immediately** — After setting a blind/shutter position, the state refreshes right away instead of waiting for the next poll interval. (`cover.py`)
 
-- **No crash for bulbs without color data** — If a FRITZ!DECT 500 returns `None` for hue or saturation, the integration no longer raises a `TypeError`. (`light.py`)
+- **No crash for bulbs without color data** — If a FRITZ!DECT 500 returns `None` for hue or saturation, the integration no longer raises a `TypeError`. The official integration removed this guard and will crash in that case. (`light.py`)
 
 - **Climate platform loads correctly** — A missing `callback` import that caused a `NameError` when loading the climate platform is fixed. (`climate.py`)
 
