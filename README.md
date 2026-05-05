@@ -131,6 +131,8 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 - **Climate platform loads correctly** — A missing `callback` import that caused a `NameError` when loading the climate platform is fixed. (`climate.py`)
 
+- **No stuck error state on malformed XML** — A garbled XML response from the FRITZ!Box during startup (e.g. during reboot) no longer leaves the integration in an error state requiring a manual reload. The integration now automatically retries instead. (`coordinator.py`)
+
 ### ✨ Improvements
 
 - **Routines included in diagnostic exports** — FRITZ!SmartHome triggers (routines) are now part of the HA diagnostic download. (`diagnostics.py`)
