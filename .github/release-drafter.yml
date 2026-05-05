@@ -47,6 +47,11 @@ categories:
       - 'ci'
       - 'ci/cd'
 
+exclude-labels:
+  - 'upstream-sync'
+  - 'chore'
+  - 'skip-changelog'
+
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&'
 
