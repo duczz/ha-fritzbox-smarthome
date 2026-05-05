@@ -7,6 +7,8 @@ from datetime import timedelta
 
 from pyfritzhome import Fritzhome, FritzhomeDevice, LoginError
 from pyfritzhome.devicetypes import FritzhomeTemplate, FritzhomeTrigger
+from xml.etree.ElementTree import ParseError as XMLParseError
+
 from requests.exceptions import ConnectionError as RequestConnectionError, HTTPError
 
 from homeassistant.config_entries import ConfigEntry
@@ -68,7 +70,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
 
         try:
             await self.hass.async_add_executor_job(self.fritz.login)
-        except RequestConnectionError as err:
+        except (RequestConnectionError, XMLParseError) as err:
             raise ConfigEntryNotReady from err
         except LoginError as err:
             raise ConfigEntryAuthFailed from err
