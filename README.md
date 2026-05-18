@@ -7,7 +7,6 @@
 [![HACS Custom][hacs-badge]][hacs-url]
 [![Home Assistant][ha-badge]][ha-url]
 [![Version][version-badge]][release-url]
-[![License][license-badge]](LICENSE)
 
 [![Add to HACS][hacs-add-badge]][hacs-add-url]
 
