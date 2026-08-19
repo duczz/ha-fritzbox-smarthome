@@ -132,6 +132,20 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 - **No stuck error state on malformed XML** — A garbled XML response from the FRITZ!Box during startup (e.g. during reboot) no longer leaves the integration in an error state requiring a manual reload. The integration now automatically retries instead. (`coordinator.py`)
 
+- **Thermostat guard no longer crashes** — Trying to change temperature, HVAC mode, or preset while holiday/summer mode is active, or while the device is locked, previously crashed with an unhandled error instead of showing the intended message. (`climate.py`)
+
+- **Timeouts are now properly detected** — A slow-but-connected FRITZ!Box (a read timeout, as opposed to a dropped connection) now triggers the same automatic reload as a connection loss. Previously only connection-level failures were caught, not read timeouts. (`coordinator.py`)
+
+- **Malformed XML handled during re-login, not just at startup** — A garbled XML response from the FRITZ!Box during the silent re-login that follows a session expiry is now handled the same way as at startup, triggering a clean reload instead of an unhandled error. (`coordinator.py`)
+
+- **Template support check hardened for old Fritz!OS** — The template-support check is now guarded against `HTTPError` the same way the routine/trigger-support check already was. (`coordinator.py`)
+
+- **No crash on incomplete power-meter data** — A device reporting a power-meter glitch (present, but with zero/garbled readings) with a missing energy value no longer aborts the update cycle for all devices. (`coordinator.py`)
+
+- **Device removal guard covers sub-unit-only devices** — Devices that report only a sub-unit without a separate main device (e.g. Energy 250) are now correctly protected from accidental removal via the HA device UI. (`__init__.py`)
+
+- **Entity names follow device renames** — Switch, cover, light, thermostat, and trigger entities now follow a device rename made in Home Assistant, instead of staying frozen to the name reported by the FRITZ!Box. (`entity.py`)
+
 ### ✨ Improvements
 
 - **Routines included in diagnostic exports** — FRITZ!SmartHome triggers (routines) are now part of the HA diagnostic download. (`diagnostics.py`)
