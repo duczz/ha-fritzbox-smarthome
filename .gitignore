@@ -1,2 +1,11 @@
 __pycache__/
 *.pyc
+
+# Local-only - PersonalOS
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+
+# Environment / secrets
+.env
+.env.*
