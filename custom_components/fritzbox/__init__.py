@@ -73,12 +73,13 @@ async def async_remove_config_entry_device(
     """Remove Fritzbox config entry from a device."""
     coordinator = entry.runtime_data
 
+    protected_ains = {
+        fdev.device_and_unit_id[0] for fdev in coordinator.data.devices.values()
+    }
+    protected_ains |= set(coordinator.data.templates) | set(coordinator.data.triggers)
+
     for identifier in device.identifiers:
-        if identifier[0] == DOMAIN and (
-            identifier[1] in coordinator.data.devices
-            or identifier[1] in coordinator.data.templates
-            or identifier[1] in coordinator.data.triggers
-        ):
+        if identifier[0] == DOMAIN and identifier[1] in protected_ains:
             return False
 
     return True

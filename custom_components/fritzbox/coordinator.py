@@ -9,7 +9,11 @@ from pyfritzhome import Fritzhome, FritzhomeDevice, LoginError
 from pyfritzhome.devicetypes import FritzhomeTemplate, FritzhomeTrigger
 from xml.etree.ElementTree import ParseError as XMLParseError
 
-from requests.exceptions import ConnectionError as RequestConnectionError, HTTPError
+from requests.exceptions import (
+    ConnectionError as RequestConnectionError,
+    HTTPError,
+    Timeout as RequestTimeout,
+)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
@@ -75,9 +79,14 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
         except LoginError as err:
             raise ConfigEntryAuthFailed from err
 
-        self.has_templates = await self.hass.async_add_executor_job(
-            self.fritz.has_templates
-        )
+        try:
+            self.has_templates = await self.hass.async_add_executor_job(
+                self.fritz.has_templates
+            )
+        except HTTPError:
+            # very old Fritz!OS versions don't have this api endpoint
+            # so we need to fetch the HTTPError here and assume no templates
+            self.has_templates = False
         LOGGER.debug("enable smarthome templates: %s", self.has_templates)
 
         try:
@@ -145,6 +154,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 and device.voltage <= 0
                 and isinstance(device.power, int)
                 and device.power <= 0
+                and isinstance(device.energy, int)
                 and device.energy <= 0
             ):
                 LOGGER.debug("Assume device %s as unavailable", device.name)
@@ -198,7 +208,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 await self.hass.async_add_executor_job(self.fritz.login)
             except LoginError as login_ex:
                 raise ConfigEntryAuthFailed from login_ex
-            except RequestConnectionError as conn_ex:
+            except (RequestConnectionError, XMLParseError) as conn_ex:
                 self.hass.config_entries.async_schedule_reload(
                     self.config_entry.entry_id
                 )
@@ -207,12 +217,12 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 new_data = await self.hass.async_add_executor_job(
                     self._update_fritz_devices
                 )
-            except (HTTPError, RequestConnectionError) as retry_ex:
+            except (HTTPError, RequestConnectionError, RequestTimeout) as retry_ex:
                 self.hass.config_entries.async_schedule_reload(
                     self.config_entry.entry_id
                 )
                 raise UpdateFailed(str(retry_ex)) from retry_ex
-        except (RequestConnectionError, TimeoutError) as ex:
+        except (RequestConnectionError, RequestTimeout, TimeoutError) as ex:
             LOGGER.debug(
                 "Reload %s due to error '%s' to ensure proper re-login",
                 self.config_entry.title,

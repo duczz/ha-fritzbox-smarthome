@@ -87,6 +87,7 @@ class FritzboxCover(FritzBoxDeviceEntity, CoverEntity):
         await self.hass.async_add_executor_job(
             self.data.set_level_percentage, 100 - kwargs[ATTR_POSITION], True
         )
+        await self.coordinator.async_refresh()
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
