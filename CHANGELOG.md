@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-08-19
+
 ### Bugfixes
 
 #### `climate.py` — Missing `HomeAssistantError` import
