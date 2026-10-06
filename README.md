@@ -130,8 +130,6 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 - **No crash for bulbs without color data** — If a FRITZ!DECT 500 returns `None` for hue or saturation, the integration no longer raises a `TypeError`. The official integration removed this guard and will crash in that case. (`light.py`)
 
-- **Climate platform loads correctly** — A missing `callback` import that caused a `NameError` when loading the climate platform is fixed. (`climate.py`)
-
 - **No stuck error state on malformed XML** — A garbled XML response from the FRITZ!Box during startup (e.g. during reboot) no longer leaves the integration in an error state requiring a manual reload. The integration now automatically retries instead. (`coordinator.py`)
 
 - **Thermostat guard no longer crashes** — Trying to change temperature, HVAC mode, or preset while holiday/summer mode is active, or while the device is locked, previously crashed with an unhandled error instead of showing the intended message. (`climate.py`)
