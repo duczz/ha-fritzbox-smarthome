@@ -154,7 +154,7 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 - **Discovery skips devices without Smart Home** — FRITZ!Box devices that definitely cannot control Smart Home devices (e.g. repeaters) are no longer offered during SSDP discovery. If the capability cannot be determined, the device is still offered. Needs `pyfritzhome` 0.6.21. (`config_flow.py`)
 
-- **Translated error messages** — Connection and login errors are translated and still carry the original error text. The configuration fields have descriptions. (`coordinator.py`, `translations/en.json`)
+- **Translated error messages** — Connection and login errors are translated; connection errors still carry the original error text. The configuration fields have descriptions. (`coordinator.py`, `translations/en.json`)
 
 - **Obsolete devices are removed with the current device registry API** — The previously used `remove_config_entry_id` argument is deprecated in Home Assistant Core. (`coordinator.py`)
 
@@ -174,7 +174,7 @@ Pull requests are welcome. For larger changes, please open an issue first to dis
 [hacs-url]: https://hacs.xyz
 [ha-badge]: https://img.shields.io/badge/Home%20Assistant-2025.3+-41BDF5.svg?style=for-the-badge&logo=homeassistant&logoColor=white
 [ha-url]: https://www.home-assistant.io/integrations/fritzbox
-[version-badge]: https://img.shields.io/badge/version-1.0.6-22c55e.svg?style=for-the-badge&logo=github&logoColor=white
+[version-badge]: https://img.shields.io/badge/version-1.0.7-22c55e.svg?style=for-the-badge&logo=github&logoColor=white
 [release-url]: https://github.com/duczz/ha-fritzbox-smarthome/releases
 [license-badge]: https://img.shields.io/badge/license-MIT-94a3b8.svg?style=for-the-badge
 [hacs-add-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
