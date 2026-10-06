@@ -16,15 +16,29 @@ from requests.exceptions import (
 )
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    CONF_VERIFY_SSL,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, LOGGER
+from .const import DEFAULT_VERIFY_SSL, DOMAIN, LOGGER
 
 type FritzboxConfigEntry = ConfigEntry[FritzboxDataUpdateCoordinator]
+
+
+def _reload_failed(ex: Exception) -> UpdateFailed:
+    """Build the translated UpdateFailed that keeps the original error text."""
+    return UpdateFailed(
+        translation_domain=DOMAIN,
+        translation_key="connect_error_reload",
+        translation_placeholders={"error": str(ex)},
+    )
 
 
 @dataclass
@@ -69,15 +83,23 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
             host=self.config_entry.data[CONF_HOST],
             user=self.config_entry.data[CONF_USERNAME],
             password=self.config_entry.data[CONF_PASSWORD],
+            ssl_verify=self.config_entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL),
             timeout=20,
         )
 
         try:
             await self.hass.async_add_executor_job(self.fritz.login)
         except (RequestConnectionError, XMLParseError) as err:
-            raise ConfigEntryNotReady from err
+            raise ConfigEntryNotReady(
+                translation_domain=DOMAIN,
+                translation_key="connect_error",
+                translation_placeholders={"error": str(err)},
+            ) from err
         except LoginError as err:
-            raise ConfigEntryAuthFailed from err
+            raise ConfigEntryAuthFailed(
+                translation_domain=DOMAIN,
+                translation_key="login_failed",
+            ) from err
 
         try:
             self.has_templates = await self.hass.async_add_executor_job(
@@ -130,9 +152,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
         ):
             if not set(device.identifiers) & identifiers:
                 LOGGER.debug("Removing obsolete device entry %s", device.name)
-                device_reg.async_update_device(
-                    device.id, remove_config_entry_id=self.config_entry.entry_id
-                )
+                device_reg.async_remove_device(device.id)
 
     def _update_fritz_devices(self) -> FritzboxCoordinatorData:
         """Update all fritzbox device data."""
@@ -207,12 +227,15 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
             try:
                 await self.hass.async_add_executor_job(self.fritz.login)
             except LoginError as login_ex:
-                raise ConfigEntryAuthFailed from login_ex
+                raise ConfigEntryAuthFailed(
+                    translation_domain=DOMAIN,
+                    translation_key="login_failed",
+                ) from login_ex
             except (RequestConnectionError, XMLParseError) as conn_ex:
                 self.hass.config_entries.async_schedule_reload(
                     self.config_entry.entry_id
                 )
-                raise UpdateFailed(str(conn_ex)) from conn_ex
+                raise _reload_failed(conn_ex) from conn_ex
             try:
                 new_data = await self.hass.async_add_executor_job(
                     self._update_fritz_devices
@@ -221,7 +244,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 self.hass.config_entries.async_schedule_reload(
                     self.config_entry.entry_id
                 )
-                raise UpdateFailed(str(retry_ex)) from retry_ex
+                raise _reload_failed(retry_ex) from retry_ex
         except (RequestConnectionError, RequestTimeout, TimeoutError) as ex:
             LOGGER.debug(
                 "Reload %s due to error '%s' to ensure proper re-login",
@@ -229,7 +252,7 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator[FritzboxCoordinatorDat
                 ex,
             )
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
-            raise UpdateFailed(str(ex)) from ex
+            raise _reload_failed(ex) from ex
 
         for device in new_data.devices.values():
             # create device registry entry for new main devices
