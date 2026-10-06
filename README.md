@@ -65,7 +65,7 @@ This fork of the official Home Assistant [FRITZ!SmartHome integration][ha-url] f
 
 ## ✅ Requirements
 
-- Home Assistant **2024.1.0** or newer
+- Home Assistant **2025.3.0** or newer
 - A FRITZ!Box with FRITZ!SmartHome support
 - **Smart Home** must be enabled in the FRITZ!Box UI
 
@@ -97,10 +97,12 @@ This fork of the official Home Assistant [FRITZ!SmartHome integration][ha-url] f
 
 | Field | Description |
 |---|---|
-| Host | Hostname or IP (e.g. `fritz.box` or `192.168.178.1`) |
+| URL | Address of the FRITZ!Box, e.g. `http://fritz.box`, `http://192.168.178.1` or `https://fritz.box` |
 | Username | FRITZ!Box user account |
 | Password | Password for the user account |
-| SSL | Enable encrypted connection (optional) |
+| Verify SSL certificate | Only used for `https://` URLs. Turn it off if your FRITZ!Box uses a self-signed certificate |
+
+Existing entries are converted automatically on the first start (a plain host such as `fritz.box` becomes `http://fritz.box`). The URL and the certificate check can be changed later via **Reconfigure**.
 
 > **Tip:** Create a dedicated FRITZ!Box user with *Smart Home* permission only — do not use the admin account.
 
@@ -148,6 +150,14 @@ Auto-discovery via SSDP is supported. If your FRITZ!Box is on the local network,
 
 ### ✨ Improvements
 
+- **HTTPS and certificate check** — The FRITZ!Box is configured by URL, so `https://` addresses work, and the certificate check can be switched off for self-signed certificates. Existing entries are migrated automatically. (`config_flow.py`, `__init__.py`, `coordinator.py`)
+
+- **Discovery skips devices without Smart Home** — FRITZ!Box devices that definitely cannot control Smart Home devices (e.g. repeaters) are no longer offered during SSDP discovery. If the capability cannot be determined, the device is still offered. Needs `pyfritzhome` 0.6.21. (`config_flow.py`)
+
+- **Translated error messages** — Connection and login errors are translated and still carry the original error text. The configuration fields have descriptions. (`coordinator.py`, `translations/en.json`)
+
+- **Obsolete devices are removed with the current device registry API** — The previously used `remove_config_entry_id` argument is deprecated in Home Assistant Core. (`coordinator.py`)
+
 - **Routines included in diagnostic exports** — FRITZ!SmartHome triggers (routines) are now part of the HA diagnostic download. (`diagnostics.py`)
 
 - **Readable log messages** — The coordinator name in HA logs shows the FRITZ!Box hostname instead of the internal config entry ID. (`coordinator.py`)
@@ -162,7 +172,7 @@ Pull requests are welcome. For larger changes, please open an issue first to dis
 
 [hacs-badge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=white
 [hacs-url]: https://hacs.xyz
-[ha-badge]: https://img.shields.io/badge/Home%20Assistant-2024.1+-41BDF5.svg?style=for-the-badge&logo=homeassistant&logoColor=white
+[ha-badge]: https://img.shields.io/badge/Home%20Assistant-2025.3+-41BDF5.svg?style=for-the-badge&logo=homeassistant&logoColor=white
 [ha-url]: https://www.home-assistant.io/integrations/fritzbox
 [version-badge]: https://img.shields.io/badge/version-1.0.6-22c55e.svg?style=for-the-badge&logo=github&logoColor=white
 [release-url]: https://github.com/duczz/ha-fritzbox-smarthome/releases
