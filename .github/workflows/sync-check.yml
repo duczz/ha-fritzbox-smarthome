@@ -23,7 +23,7 @@ jobs:
           FILES=(
             "__init__.py" "binary_sensor.py" "button.py" "climate.py"
             "config_flow.py" "const.py" "coordinator.py" "cover.py"
-            "diagnostics.py" "entity.py" "light.py" "manifest.json"
+            "diagnostics.py" "entity.py" "icons.json" "light.py" "manifest.json"
             "model.py" "sensor.py" "strings.json" "switch.py"
           )
 
