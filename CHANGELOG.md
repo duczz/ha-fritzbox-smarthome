@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-10-06
+
 ### Features
 
 #### `config_flow.py`, `__init__.py`, `coordinator.py` — URL based configuration with SSL verification
@@ -16,7 +18,7 @@
 ### Improvements
 
 #### `coordinator.py` — translated exceptions
-- **Change:** Adopted from upstream (home-assistant/core #170445): `connect_error`, `connect_error_reload` and `login_failed` are translated. The original error text stays part of the message (`{error}`), so the HTTP code or timeout is still visible.
+- **Change:** Adopted from upstream (home-assistant/core #170445): `connect_error`, `connect_error_reload` and `login_failed` are translated. The two connection errors keep the original error text (`{error}`), so the HTTP code or timeout is still visible; the login error has a fixed message.
 - Field descriptions for username and password added (home-assistant/core #170219).
 
 #### `coordinator.py` — device registry API
