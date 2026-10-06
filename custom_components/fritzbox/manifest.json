@@ -15,7 +15,7 @@
     "pyfritzhome"
   ],
   "requirements": [
-    "pyfritzhome==0.6.21"
+    "pyfritzhome>=0.6.21"
   ],
   "ssdp": [
     {

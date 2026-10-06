@@ -11,7 +11,7 @@
     },
     "error": {
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "invalid_url": "The URL is invalid. Enter an address like http://fritz.box",
+      "invalid_url": "The address is invalid. Enter a host name or IP address, optionally starting with http or https.",
       "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
       "not_supported": "Connected to FRITZ!Box but it's unable to control Smart Home devices.",
       "ssl_error": "The SSL certificate could not be verified. Disable certificate verification if your FRITZ!Box uses a self-signed certificate."
