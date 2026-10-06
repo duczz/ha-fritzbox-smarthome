@@ -11,7 +11,10 @@
     },
     "error": {
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]"
+      "invalid_url": "The URL is invalid. Enter an address like http://fritz.box",
+      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
+      "not_supported": "Connected to FRITZ!Box but it's unable to control Smart Home devices.",
+      "ssl_error": "The SSL certificate could not be verified. Disable certificate verification if your FRITZ!Box uses a self-signed certificate."
     },
     "flow_title": "{name}",
     "step": {
@@ -20,6 +23,10 @@
           "password": "[%key:common::config_flow::data::password%]",
           "username": "[%key:common::config_flow::data::username%]"
         },
+        "data_description": {
+          "password": "Password for the user to connect Home Assistant to your FRITZ!Box.",
+          "username": "Name of the user to connect Home Assistant to your FRITZ!Box."
+        },
         "description": "Do you want to set up {name}?"
       },
       "reauth_confirm": {
@@ -27,25 +34,35 @@
           "password": "[%key:common::config_flow::data::password%]",
           "username": "[%key:common::config_flow::data::username%]"
         },
+        "data_description": {
+          "password": "Password for the user to connect Home Assistant to your FRITZ!Box.",
+          "username": "Name of the user to connect Home Assistant to your FRITZ!Box."
+        },
         "description": "Update your login information for {name}."
       },
       "reconfigure": {
         "data": {
-          "host": "[%key:common::config_flow::data::host%]"
+          "url": "[%key:common::config_flow::data::url%]",
+          "verify_ssl": "[%key:common::config_flow::data::verify_ssl%]"
         },
         "data_description": {
-          "host": "The hostname or IP address of your FRITZ!Box router."
+          "url": "The URL of your FRITZ!Box.",
+          "verify_ssl": "Whether to verify the SSL certificate when SSL encryption is used to connect to your FRITZ!Box."
         },
         "description": "Update your configuration information for {name}."
       },
       "user": {
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
           "password": "[%key:common::config_flow::data::password%]",
-          "username": "[%key:common::config_flow::data::username%]"
+          "url": "[%key:common::config_flow::data::url%]",
+          "username": "[%key:common::config_flow::data::username%]",
+          "verify_ssl": "[%key:common::config_flow::data::verify_ssl%]"
         },
         "data_description": {
-          "host": "The hostname or IP address of your FRITZ!Box router."
+          "password": "Password for the user to connect Home Assistant to your FRITZ!Box.",
+          "url": "The URL of your FRITZ!Box.",
+          "username": "Name of the user to connect Home Assistant to your FRITZ!Box.",
+          "verify_ssl": "Whether to verify the SSL certificate when SSL encryption is used to connect to your FRITZ!Box."
         },
         "description": "Enter your FRITZ!Box information."
       }
@@ -90,6 +107,15 @@
     },
     "change_settings_while_lock_enabled": {
       "message": "Can't change settings while manual access for telephone, app, or user interface is disabled on the device"
+    },
+    "connect_error": {
+      "message": "A connection error occurred while setting up the integration. The setup will be retried. Error: {error}"
+    },
+    "connect_error_reload": {
+      "message": "A connection error occurred while updating the data from the FRITZ!Box. The integration is going to be reloaded to ensure a proper re-login. Error: {error}"
+    },
+    "login_failed": {
+      "message": "Login failed, please check your username and password and try again."
     },
     "manual_switching_disabled": {
       "message": "Can't toggle switch while manual switching is disabled for the device."

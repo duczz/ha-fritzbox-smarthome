@@ -5,13 +5,19 @@ from __future__ import annotations
 from requests.exceptions import ConnectionError as RequestConnectionError, HTTPError
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP, UnitOfTemperature
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_VERIFY_SSL,
+    EVENT_HOMEASSISTANT_STOP,
+    UnitOfTemperature,
+)
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.entity_registry import RegistryEntry, async_migrate_entries
 
-from .const import DOMAIN, LOGGER, PLATFORMS
+from .const import DEFAULT_VERIFY_SSL, DOMAIN, LOGGER, PLATFORMS
 from .coordinator import FritzboxConfigEntry, FritzboxDataUpdateCoordinator
+from .util import normalize_url
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: FritzboxConfigEntry) -> bool:
@@ -65,6 +71,41 @@ async def async_unload_entry(hass: HomeAssistant, entry: FritzboxConfigEntry) ->
         LOGGER.debug("logout failed with '%s', anyway continue with unload", ex)
 
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: FritzboxConfigEntry) -> bool:
+    """Migrate an old config entry to the URL based format (1.2)."""
+    LOGGER.debug(
+        "Migrating configuration from version %s.%s", entry.version, entry.minor_version
+    )
+    if entry.version > 1:
+        # the user has downgraded from a future version
+        return False
+
+    if entry.minor_version < 2:
+        host = entry.data.get(CONF_HOST, "")
+        try:
+            host = normalize_url(host)
+        except ValueError:
+            LOGGER.warning("Could not convert host %r to a URL, keeping it", host)
+
+        hass.config_entries.async_update_entry(
+            entry,
+            data={
+                **entry.data,
+                CONF_HOST: host,
+                CONF_VERIFY_SSL: entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL),
+            },
+            version=1,
+            minor_version=2,
+        )
+
+    LOGGER.debug(
+        "Migration to configuration version %s.%s successful",
+        entry.version,
+        entry.minor_version,
+    )
+    return True
 
 
 async def async_remove_config_entry_device(
