@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Features
+
+#### `config_flow.py`, `__init__.py`, `coordinator.py` — URL based configuration with SSL verification
+- **Change:** The FRITZ!Box is now configured by URL (`http://fritz.box`, `https://fritz.box:443`, ...) plus a *Verify SSL certificate* switch, in the setup, reauth and reconfigure steps. This adopts the upstream change (home-assistant/core #179839), but keeps `voluptuous` and the fork's SSDP handling.
+- **Migration:** Config entries are migrated from 1.1 to 1.2 on the first start. A plain host such as `fritz.box` becomes `http://fritz.box`, `verify_ssl` is set to `true`. Entries that already hold a URL keep it. Entries without `verify_ssl` (for example after a downgrade) are read as `true`.
+- **Discovery:** Known boxes are recognised whether the entry stores a plain host or a URL. A known `http://` box follows a changed IP address; an `https://` entry keeps its host, because an IP address would break the certificate check.
+- **Errors:** A certificate problem is shown in the form (`ssl_error`) instead of aborting the flow, an invalid address as `invalid_url`.
+
+#### `config_flow.py` — SSDP discovery skips devices without Smart Home
+- **Change:** Adopted from upstream (home-assistant/core #183708): devices that definitely have no Smart Home capability (e.g. FRITZ!Repeater) abort the discovery with `not_supported`. If the check is inconclusive, discovery goes on. Requires `pyfritzhome` 0.6.21. The fork's guard for hostnames in the SSDP location is kept.
+
+### Improvements
+
+#### `coordinator.py` — translated exceptions
+- **Change:** Adopted from upstream (home-assistant/core #170445): `connect_error`, `connect_error_reload` and `login_failed` are translated. The original error text stays part of the message (`{error}`), so the HTTP code or timeout is still visible.
+- Field descriptions for username and password added (home-assistant/core #170219).
+
+#### `coordinator.py` — device registry API
+- **Change:** Obsolete devices are removed with `async_remove_device()` instead of `async_update_device(remove_config_entry_id=...)`, which Home Assistant Core deprecates (removal planned for 2027.8).
+
+#### Housekeeping
+- `pyfritzhome` 0.6.21.
+- The minimum Home Assistant version in `hacs.json` and the README is now 2025.3.0. The old value (2024.1.0) was wrong; the code needs `AddConfigEntryEntitiesCallback` (2025.3.0) and `homeassistant.helpers.service_info.ssdp` (2025.2.0).
+- Tests for the migration, the config flow and the setup (`tests/`, run with `pytest-homeassistant-custom-component` on Linux/WSL).
+- `icons.json` added to the upstream sync check.
+
 ## [1.0.6] - 2026-08-19
 
 ### Bugfixes
