@@ -372,3 +372,21 @@ async def test_reconfigure_ssl_error_keeps_form(
     )
     assert result["reason"] == "reconfigure_successful"
     assert entry.data[CONF_VERIFY_SSL] is False
+
+
+async def test_reconfigure_invalid_url_keeps_entry_name(
+    hass: HomeAssistant, fritz: MagicMock, mock_setup_entry: MagicMock
+) -> None:
+    """After an input error the description still names the stored box."""
+    entry = _entry("http://fritz.box", **{CONF_VERIFY_SSL: True})
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_URL: "ftp://fritz.box", CONF_VERIFY_SSL: True}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "invalid_url"}
+    assert result["description_placeholders"] == {"name": "fritz.box"}
+    assert entry.data[CONF_HOST] == "http://fritz.box"
