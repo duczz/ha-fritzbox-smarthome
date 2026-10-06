@@ -314,6 +314,7 @@ class FritzboxConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         reconfigure_entry = self._get_reconfigure_entry()
         url = reconfigure_entry.data[CONF_HOST]
+        name = host_of(url) or url
         verify_ssl = reconfigure_entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
 
         if user_input is not None:
@@ -348,6 +349,6 @@ class FritzboxConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_VERIFY_SSL, default=verify_ssl): bool,
                 }
             ),
-            description_placeholders={"name": host_of(url) or url},
+            description_placeholders={"name": name},
             errors=errors,
         )
