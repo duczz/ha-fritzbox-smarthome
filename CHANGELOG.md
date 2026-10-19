@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-10-19
+
+### Bugfixes
+
+#### `sensor.py` — power meter sensors no longer report 0 for missing values
+- **Problem:** Power, voltage, current and total energy returned `0` when the FRITZ!Box sent no value (`device.power or 0.0`). That put fake zeros into graphs and long-term statistics.
+- **Fix:** Adopted from upstream (home-assistant/core #184968): `value_power`, `value_voltage`, `value_current` and `value_total_energy` return `None` (state *unknown*) when the value is missing. A real `0` stays `0`.
+
+#### `strings.json`, `translations/en.json` — lock sensor names were swapped
+- **Fix:** Adopted from upstream (home-assistant/core #187119): `lock` is now *Button lock via UI*, `device_lock` is *Button lock on device*. Entity IDs and states are unchanged.
+
+### Housekeeping
+- Tests for the power meter sensor values, including the wiring of the sensor descriptions (`tests/test_sensor.py`).
+- README: removed an incorrect entry about a climate import fix.
+
 ## [1.0.7] - 2026-10-06
 
 ### Features
